@@ -19,7 +19,8 @@ class FastText(nn.Module):
             self.token_embedding = nn.Embedding.from_pretrained(torch.tensor(embedding_matrix, dtype=torch.float))
         else:
             self.token_embedding = nn.Embedding(opt.vocab_size, opt.embed_dim)
-        self.ngram_embeds = [self.token_embedding]  # 1gram
+        self.ngram_embeds = torch.nn.ModuleList()
+        self.ngram_embeds.append(self.token_embedding)  # 1gram
         for i in range(2, opt.ngram + 1):
             self.ngram_embeds.append(nn.Embedding(opt.ngram_vocab_sizes[i - 2], opt.embed_dim))
         self.dense1 = nn.Linear(opt.embed_dim * 3, opt.hidden_dim)

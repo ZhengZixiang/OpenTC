@@ -14,18 +14,59 @@ import time
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader, random_split
 
 from data_utils import build_tokenizer, build_embedding_matrix, TCDataset
-from models import FastText, TextCNN, TextRNN, TextRCNN
+from models import AttBiLSTM, FastText, TextCNN, TextRNN, TextRCNN
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
+class Inferrer(object):
+
+    def __init__(self, opt):
+        super(Inferrer, self).__init__()
+        self.opt = opt
+        self.tokenizer = build_tokenizer(fnames=[opt.dataset_file['train'], opt.dataset_file['test']],
+                                         max_seq_len=opt.max_seq_len,
+                                         ngram=opt.ngram,
+                                         min_count=opt.min_count,
+                                         dat_fname='./bin/{0}_tokenizer.dat'.format(opt.dataset))
+        opt.vocab_size = len(self.tokenizer.token2idx) + 2
+        opt.ngram_vocab_sizes = [len(self.tokenizer.ngram2idx[n]) + 2 for n in range(2, opt.ngram + 1)]
+        embedding_matrix = build_embedding_matrix(
+            token2idx=self.tokenizer.token2idx,
+            embed_dim=opt.embed_dim,
+            embed_file=opt.embed_file,
+            dat_fname='./bin/{0}_{1}_embedding_matrix.dat'.format(str(opt.embed_dim), opt.dataset))
+        self.model = opt.model_class(opt, embedding_matrix)
+        print('loading model {0} ...'.format(opt.model_name))
+        self.model.load_state_dict(torch.load(opt.state_dict_path))
+        self.model = self.model.to(opt.device)
+        # Switch model to evaluation mode
+        self.model.eval()
+        torch.autograd.set_grad_enabled(False)
+
+    def infer(self, raw_text):
+        text_indices, ngram_indices_li = self.tokenizer.text_to_sequence(raw_text)
+        t_inputs = {
+            'text_indices': text_indices,
+        }
+        if ngram_indices_li:
+            for n in range(2, self.opt.ngram + 1):
+                t_inputs[str(n) + 'gram_indices'] = ngram_indices_li[n - 2]
+        t_inputs = [torch.tensor([t_inputs[col]], dtype=torch.int64).to(self.opt.device) for col in self.opt.input_cols]
+        t_outputs = self.model(t_inputs)
+        t_probs = F.softmax(t_outputs, dim=-1).cpu().numpy()
+        return t_probs
+
+
 class Instructor(object):
+
     def __init__(self, opt):
         super(Instructor, self).__init__()
         self.opt = opt
@@ -184,17 +225,28 @@ def set_seed(opt):
 def main():
     parser = argparse.ArgumentParser()
     # Setting about initialization and dataset.
-    parser.add_argument('--pretrained_model_name', default='bert-base-uncased', type=str)
-    parser.add_argument('--model_name', default='fasttext', type=str)
-    parser.add_argument('--dataset', default='sst-2', type=str)
-    parser.add_argument('--val_set_ratio', default=0, type=float)
+    parser.add_argument('--mode', default='infer', type=str,
+                        help='mode could be `train` or `infer`.')
+    parser.add_argument('--pretrained_model_name', default='bert-base-uncased', type=str,
+                        help='Name of pretrained language model to initialize bert-type model.')
+    parser.add_argument('--model_name', default='textcnn', type=str,
+                        help='Name of model to build like FastText, TextCNN, TextRCNN and so on.')
+    parser.add_argument('--dataset', default='sst-2', type=str,
+                        help='Name of dataset that you want to load.')
+    parser.add_argument('--val_set_ratio', default=0, type=float,
+                        help='Splitting specified ratio of train set as validation set.')
+    # Setting about inferrer.
+    parser.add_argument('--state_dict_path', default='./state_dict/textcnn_sst-2_val_acc0.8612', type=str,
+                        help='Set your trained model path.')
+    parser.add_argument('--raw_text', default='hide new secretions from the parental units', type=str,
+                        help='Input your raw data.')
     # Setting about optimization.
     parser.add_argument('--optimizer', default='adam', type=str)
     parser.add_argument('--initializer', default='xavier_uniform_', type=str)
     parser.add_argument('--learning_rate', default=5e-4, type=float)
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--l2reg', default=0.001, type=float)
-    parser.add_argument('--num_epoch', default=30, type=int)
+    parser.add_argument('--num_epoch', default=100, type=int)
     parser.add_argument('--batch_size', default=64, type=int)
     # Setting about vocabulary and embedding.
     parser.add_argument('--embed_dim', default=300, type=int)
@@ -220,6 +272,7 @@ def main():
         'textcnn': TextCNN,
         'textrnn': TextRNN,
         'textrcnn': TextRCNN,
+        'attbilstm': AttBiLSTM,
     }
     dataset_files = {
         'sst-2': {
@@ -253,11 +306,13 @@ def main():
         'textcnn': ['text_indices'],
         'textrnn': ['text_indices'],
         'textrcnn': ['text_indices'],
+        'attbilstm': ['text_indices'],
     }
     opt.input_cols = input_colses[opt.model_name]
     opt.model_class = model_classes[opt.model_name]
     opt.dataset_file = dataset_files[opt.dataset]
     opt.label_mapping = label_mappings[opt.dataset]
+    opt.reverse_label_mapping = {val: key for key, val in opt.label_mapping.items()}
     opt.num_labels = len(opt.label_mapping)
     opt.kernel_sizes = list(map(int, opt.kernel_sizes.split(',')))
 
@@ -266,11 +321,20 @@ def main():
     opt.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') \
         if opt.device is None else torch.device(opt.device)
 
-    log_file = '{}-{}-{}.log'.format(opt.model_name, opt.dataset, time.strftime('%y%m%d-%H%M', time.localtime()))
-    logger.addHandler(logging.FileHandler(log_file))
+    if not os.path.exists('./bin'):  # Create dir for save pickle file.
+        os.makedirs('./bin')
 
-    ins = Instructor(opt)
-    ins.run()
+    if opt.mode == 'train':
+        log_file = '{}-{}-{}.log'.format(opt.model_name, opt.dataset, time.strftime('%y%m%d-%H%M', time.localtime()))
+        logger.addHandler(logging.FileHandler(log_file))
+        ins = Instructor(opt)
+        ins.run()
+    elif opt.mode == 'infer':
+        inf = Inferrer(opt)
+        t_probs = inf.infer(opt.raw_text)
+        print(opt.reverse_label_mapping[int(t_probs.argmax(axis=-1))])
+    else:
+        raise ValueError('Unexpected mode to run model!')
 
 
 if __name__ == '__main__':

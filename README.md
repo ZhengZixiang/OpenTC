@@ -64,7 +64,7 @@ You can specify your embedding file with argument `--embed_file`. With None valu
 ## Results
 | model | acc / SST-2 | F1-Score / SST-2 |
 | :---: | :---: | :---: |
-| FastText |  |  |
+| FastText | 0.7959 | 0.7959 |
 | TextCNN | 0.8612 | 0.8608 |
 | TextRNN | 0.8544 | 0.8541 |
 | TextRCNN | 0.8635 | 0.8635 |
