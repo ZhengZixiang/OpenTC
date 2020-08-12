@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-
+Attention-Based Bidirectional Long Short-Term Memory Networks for Relation Classification
+Peng Zhou, Wei Shi, Jun Tian, Zhenyu Qi, Bingchen Li, Hongwei Hao, Bo Xu
+(ACL 2016) https://www.aclweb.org/anthology/P16-2034/
 """
 
 import torch

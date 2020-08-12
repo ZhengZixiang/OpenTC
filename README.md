@@ -8,27 +8,28 @@ Text classification is one of the basic and classic task of NLP. The repository 
 
 There are features of this repo:
 
-- Support various models such as FastText, TextCNN, TextRNN, TextRCNN, etc.
-- Support pretrained embedding such as word2vec, Glove, Tencent AILab Chinese Embedding, etc.
+- Support various models such as FastText, TextCNN, TextRNN, TextRCNN, Attn-BiLSTM, Transformer, etc.
+- Support various attention mechanism such as (scaled) dot product, MLP, bi-linear, MHSA, etc.
+- Support pretrained embedding like word2vec, Glove, Tencent AILab Chinese Embedding, etc.
 - Support various preprocessed English and Chinese dataset as benchmark such as SST-1, SST-2, TREC, etc.
 - Support multiple optimization methods sush Adam, SGD, Adadelta, etc.
 - Support multiple loss function for text classification such as Softmax, Label Smoothing, Focal Loss, etc.
-- Support multiple text classification task such as binary classification, multi-classification.  
+- Support multiple text classification task such as binary classification, multi-classification.
+- Support various tricks like highway network, position embedding, customized feature, etc.
+- Support pretrained language model like BERT, ELMo and so on.  
 
 文本分类是自然语言处理的一项基本而经典的任务。本仓库实现了基于PyTorch的多种文本分类模型。任何人都能很容易学习如何构建文本分类模型，并且将其应用在各种数据集上。除了本仓库，我们还有一个收集关于文本分类领域值得一读的论文与相关资源合集的仓库 [**TCPapers**](https://github.com/ZhengZixiang/TCPapers) 。欢迎各种形式的仓库贡献！
 
  本仓库有如下特性：
- - 支持多种模型，如FastText、TextCNN、TextRNN、TextRCNN等
-
- - 支持各种预训练词向量如word2vec、Glove、腾讯中文词向量等
-
- - 提供多种预处理好的中英文数据集如SST-1、SST-2、TREC等
-
- - 支持多种优化方式如Adam、SGD、Adadelta等
-
- - 支持多种适用于文本分类的损失函数如Softmax、标签平滑、Focal Loss等
-
- - 支持多种文本分类任务如二分类、多分类等
+- 支持多种模型，如FastText、TextCNN、TextRNN、TextRCNN、Attn-BiLSTM等
+- 支持多种注意力机制，如点积、缩放点击、MLP、多头自注意力等
+- 支持各种预训练词向量如word2vec、Glove、腾讯中文词向量等
+- 提供多种预处理好的中英文数据集如SST-1、SST-2、TREC等
+- 支持多种优化方式如Adam、SGD、Adadelta等
+- 支持多种适用于文本分类的损失函数如Softmax、标签平滑、Focal Loss等
+- 支持多种文本分类任务如二分类、多分类等
+- 支持如高速连接融合字词向量、位置向量、自定义特征等技巧
+- 支持预训练语言模型如BERT、ELMo等
 
 ## Getting Started
 Run `run.py` with specified arguments to train model.
@@ -36,15 +37,16 @@ Run `run.py` with specified arguments to train model.
 ## Dataset and Format
 In this repository, we have preprocessed various famous datasets like SST-1, SST-2, TREC and so on.
 
-| dataset | avg length | #classes | #train | #val | download |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| SST-2 | 19 | 2 | 67349 | 872 | [link](https://gluebenchmark.com/tasks) |
+| dataset | avg length | #classes | #train | #val | task | download |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| SST-2 | 19 | 2 | 67349 | 872 | sentiment | [link](https://gluebenchmark.com/tasks) |
 
 If you want to apply the code on your own dataset. Please follow these:
 1. Reformat your data file to format like `{label}\t{tokens}`.
 2. Split your dataset to train set and test set (labeled) .
 3. Add your code about the name and directories of your dataset in `main()` of `run.py` (from line 205).
-4. Change the value of argument `--dataset` with your dataset name and then run python file. 
+4. Change the value of argument `--dataset` with your dataset name and then run python file.
+5. In order to get best result, you should wait a few more steps when the accuracy is floating unsteadily instead of early-stop. 
 
 ## Supported Models
 - **Convolutional Neural Networks for Sentence Classification**. *Yoon Kim*. (EMNLP 2014) [[paper]](https://arxiv.org/abs/1408.5882) - ***TextCNN***
@@ -62,14 +64,14 @@ You can specify your embedding file with argument `--embed_file`. With None valu
 * We recommend set the learning rate between 1e-2 to 1e-4 for non-BERT-based models and 1e-4 to 1e-5 for BERT-based models.
 * Because non-BERT-based model is unstable, you should try it with many epochs and different random seed.
 
-## Results
-| model | acc / SST-2 | F1-Score / SST-2 |
-| :---: | :---: | :---: |
-| FastText | 0.7959 | 0.7959 |
-| TextCNN | 0.8612 | 0.8608 |
-| TextRNN | 0.8544 | 0.8541 |
-| TextRCNN | 0.8635 | 0.8635 |
-| Attn-BiLSTM |  |  |
+## Personal Test Results
+| model | acc / F1 score (SST-2) |
+| :---: | :---: |
+| FastText | 0.7959 / 0.7959 |
+| TextCNN | 0.8612 / 0.8608 |
+| TextRNN | 0.8544 / 0.8541 |
+| TextRCNN | 0.8635 / 0.8635 |
+| Attn-BiLSTM | 0.8716 / 0.8715 |
 
 ## Requirements
 We only test our code in environment below.

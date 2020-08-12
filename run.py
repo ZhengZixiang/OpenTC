@@ -258,6 +258,7 @@ def main():
     parser.add_argument('--kernel_sizes', default='3,4,5', type=str)  # `3,4,5` are used in TextCNN paper.
     parser.add_argument('--num_kernels', default=100, type=int)  # 100 is used in TextCNN paper.
     parser.add_argument('--hidden_dim', default=300, type=int)
+    # For pre-trained language model.
     parser.add_argument('--bert_dim', default=768, type=int)
     # Other setting.
     parser.add_argument('--log_step', default=500, type=int)
