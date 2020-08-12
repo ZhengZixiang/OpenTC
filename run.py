@@ -19,7 +19,7 @@ from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader, random_split
 
 from data_utils import build_tokenizer, build_embedding_matrix, TCDataset
-from models import AttBiLSTM, FastText, TextCNN, TextRNN, TextRCNN
+from models import AttnBiLSTM, FastText, TextCNN, TextRNN, TextRCNN
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -225,11 +225,11 @@ def set_seed(opt):
 def main():
     parser = argparse.ArgumentParser()
     # Setting about initialization and dataset.
-    parser.add_argument('--mode', default='infer', type=str,
+    parser.add_argument('--mode', default='train', type=str,
                         help='mode could be `train` or `infer`.')
     parser.add_argument('--pretrained_model_name', default='bert-base-uncased', type=str,
                         help='Name of pretrained language model to initialize bert-type model.')
-    parser.add_argument('--model_name', default='textcnn', type=str,
+    parser.add_argument('--model_name', default='attnbilstm', type=str,
                         help='Name of model to build like FastText, TextCNN, TextRCNN and so on.')
     parser.add_argument('--dataset', default='sst-2', type=str,
                         help='Name of dataset that you want to load.')
@@ -272,7 +272,7 @@ def main():
         'textcnn': TextCNN,
         'textrnn': TextRNN,
         'textrcnn': TextRCNN,
-        'attbilstm': AttBiLSTM,
+        'attnbilstm': AttnBiLSTM,
     }
     dataset_files = {
         'sst-2': {
@@ -306,7 +306,7 @@ def main():
         'textcnn': ['text_indices'],
         'textrnn': ['text_indices'],
         'textrcnn': ['text_indices'],
-        'attbilstm': ['text_indices'],
+        'attnbilstm': ['text_indices'],
     }
     opt.input_cols = input_colses[opt.model_name]
     opt.model_class = model_classes[opt.model_name]

@@ -31,9 +31,9 @@ class FastText(nn.Module):
         embedded_x = []
         for i in range(self.opt.ngram):
             embedded_x.append(self.dropout(self.ngram_embeds[i](inputs[i])))
-        out = torch.cat(embedded_x, -1)
-        out = out.mean(dim=1)
-        out = self.dense1(out)
+        out = torch.cat(embedded_x, -1)  # [batch_size, seq_len, embed_dim * 3]
+        out = out.mean(dim=1)  # [batch_size, embed_dim * 3]
+        out = self.dense1(out)  # [batch_size, hidden_dim]
         out = F.relu(out)
-        out = self.dense2(out)
+        out = self.dense2(out)  # [batch_size, num_labels]
         return out

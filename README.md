@@ -51,6 +51,7 @@ If you want to apply the code on your own dataset. Please follow these:
 - **Recurrent Neural Network for Text Classification with Multi-Task Learning**. *Pengfei Liu, Xipeng Qiu, Xuanjing Huang*. (IJCAI 2016) [[paper]](https://arxiv.org/abs/1605.05101) - ***TextRNN***
 - **Recurrent Convolutional Neural Networks for Text Classification**. *Siwei Lai, Liheng Xu, Kang Liu, Jun Zhao*. (AAAI 2015) [[paper]](http://www.nlpr.ia.ac.cn/cip/~liukang/liukangPageFile/Recurrent%20Convolutional%20Neural%20Networks%20for%20Text%20Classification.pdf) - ***TextRCNN***
 - **Bag of Tricks for Efficient Text Classification**. *Armand Joulin, Edouard Grave, Piotr Bojanowski, Tomas Mikolov*. (EACL 2016) [[paper]](https://arxiv.org/abs/1607.01759) - ***FastText***
+- **Attention-Based Bidirectional Long Short-Term Memory Networks for Relation Classification**. *Peng Zhou, Wei Shi, Jun Tian, Zhenyu Qi, Bingchen Li, Hongwei Hao, Bo Xu*. (ACL 2016) [[paper]](https://www.aclweb.org/anthology/P16-2034/) - ***Attn-BiLSTM***
 
 ## Embedding File
 You can specify your embedding file with argument `--embed_file`. With None value, the model will initialize an embedding matrix randomly.
@@ -68,7 +69,7 @@ You can specify your embedding file with argument `--embed_file`. With None valu
 | TextCNN | 0.8612 | 0.8608 |
 | TextRNN | 0.8544 | 0.8541 |
 | TextRCNN | 0.8635 | 0.8635 |
-| TextRNN_Attn |  |  |
+| Attn-BiLSTM |  |  |
 
 ## Requirements
 We only test our code in environment below.
